@@ -1,8 +1,10 @@
 # Reddit Actions
 
-### Free Reddit intelligence toolkit
+### Read-only Reddit toolkit for Python, CLI and AI agents
 
-Read **public** posts and comments — no paid Reddit API required.
+Explore **public** Reddit posts and comments with a free, open-source toolkit that runs locally. Access depends on Reddit availability and terms.
+
+The toolkit is free and open source. Reddit access depends on approval, authentication, applicable terms and rate limits; availability and zero-cost access are not guaranteed.
 
 Library · CLI · Optional MCP server · Python 3.11+
 
@@ -10,7 +12,6 @@ Library · CLI · Optional MCP server · Python 3.11+
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-138%20passing-brightgreen?style=for-the-badge)](#development)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
-[![API cost](https://img.shields.io/badge/Reddit%20API-Free-ff4500?style=for-the-badge&logo=reddit&logoColor=white)](#why-this-project)
 
 ---
 
@@ -19,7 +20,7 @@ Library · CLI · Optional MCP server · Python 3.11+
 - [Why this project?](#why-this-project)
 - [What you get](#what-you-get)
 - [Quick start](#quick-start)
-- [Session cookies (when Reddit blocks anonymous access)](#session-cookies-when-reddit-blocks-anonymous-access)
+- [Session cookies (optional authentication)](#session-cookies-optional-authentication)
 - [Verify your setup](#verify-your-setup)
 - [Library](#library)
 - [CLI](#cli)
@@ -34,18 +35,24 @@ Library · CLI · Optional MCP server · Python 3.11+
 
 ## Why this project?
 
-Product-grade Reddit access usually means the **paid** official API.  
-**Reddit Actions** is a free, read-only toolkit that talks to Reddit’s **public JSON** endpoints with a polite rate limit.
+**Reddit Actions** provides a Python library, CLI and optional MCP server for reading public Reddit posts and comments.
 
-| | Paid Reddit API | Reddit Actions |
-|---|---|---|
-| Cost | $$$ | **Free** |
-| Auth | OAuth / paid tiers | **User-Agent** + optional **session cookies** |
-| Scope | Full write/read surface | **Public read-only** |
-| Shape | Official SDK | **Python lib + CLI + MCP** |
-| Target users | Commercial integrations | Research, agents, tools like TrendScope |
+Reddit offers free access for eligible applications as well as paid access. Its current documentation lists **100 queries per minute per OAuth client ID** for eligible free access, averaged over a 10-minute window. API access requires approval; this is not an entitlement provided by installing this toolkit.
+
+- [Reddit Data API Wiki](https://support.reddithelp.com/hc/en-us/articles/16160319875092-Reddit-Data-API-Wiki)
+- [Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy)
+
+**Current implementation (experimental access):** public JSON endpoints with a descriptive User-Agent and optional session cookies. OAuth is an optional future integration and is **not implemented** in this release. The current implementation does not require OAuth credentials to run, but that does not remove Reddit’s access requirements. The OAuth quota above does not describe or guarantee the quota of the current cookie-based client. Cookies do not guarantee access or replace required approval.
+
+**Product promise:** a free local tool for exploring public Reddit posts and comments through a consistent, read-only interface. Access depends on Reddit availability and terms. No guarantee of unrestricted access, complete historical coverage, or zero Reddit fees for every use case.
 
 **Not in v1:** posting, voting, spam bots, mass scraping, Reddit Enterprise.
+
+### Planned improvements
+
+The next development priorities are secret protection, reliable request pacing and errors, pagination with explicit partial results, temporary local caching, and guided setup diagnostics. Saved searches and incremental tracking follow. These features aim to make setup easier and reduce unnecessary requests; they do not increase Reddit’s authorized quota. OAuth remains an optional integration rather than a prerequisite for these improvements. These are roadmap items, not features shipped in this release.
+
+The intended deployment is local: no shared service account or hosted credential pool. Persistent access denials should stop requests and produce a clear diagnostic; this stop behavior is planned, while the current client still performs bounded retries on 401/403.
 
 ---
 
@@ -60,11 +67,11 @@ Product-grade Reddit access usually means the **paid** official API.
 
 Design principles:
 
-- **Never crash the pipeline** — empty lists + structured errors
+- **Explicit error handling** — typed HTTP exceptions in the library and structured errors in MCP
 - **Type-hinted** public API
 - **Mocked tests** — no live Reddit required for CI
 - **Secrets stay local** — `.env` is gitignored
-- **Session-cookie fallback** — works on networks where anonymous JSON returns **HTTP 403**
+- **Optional session cookies** — availability depends on Reddit; a **403** may still occur
 
 ---
 
@@ -110,11 +117,12 @@ pip install -e ".[mcp,dev]"
 
 ---
 
-## Session cookies (when Reddit blocks anonymous access)
+## Session cookies (optional authentication)
 
 Some networks (datacenter IPs, aggressive bot detection) get **HTTP 403** on Reddit’s public JSON even with a valid User-Agent. That is platform protection, not a bug in this library.
 
-**Workaround:** copy your browser session cookies into a **local** `.env` file.  
+For permitted session-based access, configure your own browser session cookies in a **local** `.env` file. This does not bypass access restrictions or guarantee service availability.
+
 `.env` is gitignored — never commit cookies, never paste them in issues/chats.
 
 ### Step 1 — Log in
@@ -168,10 +176,9 @@ REDDIT_COOKIE_HEADER=reddit_session=...; session_tracker=...; other=...
 
 Session cookies expire. If requests return **403** again:
 
-1. Log out/in on Reddit (or use another account)  
-2. Copy the new `reddit_session` value  
-3. Update `.env`  
-4. Re-run your command  
+1. Verify that your session is valid and your intended access is permitted.
+2. If the session expired, sign in and update your local cookie values.
+3. If access remains denied, stop and resolve access with Reddit; repeated attempts or account switching are not a solution.
 
 No code changes needed.
 
@@ -180,7 +187,7 @@ No code changes needed.
 - [ ] `.env` stays on your machine only  
 - [ ] `.env` is listed in `.gitignore` (default in this repo)  
 - [ ] Do not paste cookies into GitHub issues, README, or chats  
-- [ ] Use a throwaway Reddit account if you prefer not to use your main one  
+- [ ] Treat session cookies as credentials; never share them with other users or a hosted credential pool
 
 ---
 
@@ -191,7 +198,7 @@ No code changes needed.
 .venv\Scripts\python.exe -c "from reddit_actions import search_posts; posts=search_posts('python', limit=5); print(f'{len(posts)} posts'); [print(p.score, p.title[:60]) for p in posts]"
 ```
 
-Expected: a list of real post titles from Reddit.
+When access is available: a list of real post titles from Reddit. A successful request only verifies access at that moment.
 
 CLI smoke test:
 
@@ -201,7 +208,7 @@ reddit-actions subreddit --subreddit python --sort hot --limit 5
 reddit-actions comments <post_id> --limit 10
 ```
 
-If you see `Error: Blocked or unauthorized (403)`, refresh the session cookies (section above).
+If you see `Error: Blocked or unauthorized (403)`, check session validity and access eligibility (section above). Refreshing cookies may not resolve the denial.
 
 ---
 
@@ -358,10 +365,11 @@ post.full_permalink  # always absolute reddit.com URL
 
 - Honors **`Retry-After`** on 429
 - Exponential backoff on 403 / 5xx / network errors
-- Intended use: **research, personal agents, product read-only integrations**
+- Use only within your approved purpose and applicable Reddit terms; research and commercial use have additional requirements.
 - Do **not** mass-rehost content or hammer endpoints
 - Always identify your app in the User-Agent
-- Session cookies are a **personal fallback**, not a license for abuse
+- Session cookies do not grant additional permission or guaranteed access.
+- The configured delay is local client behavior, not a Reddit quota. The current limiter is per client instance; separate calls that construct fresh clients do not share it.
 
 ---
 
@@ -415,4 +423,4 @@ Quality bar:
 
 ---
 
-**Reddit Actions** — public Reddit intelligence, free by design.
+**Reddit Actions** — a consistent interface for public Reddit posts and comments.

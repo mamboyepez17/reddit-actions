@@ -37,7 +37,7 @@ SERVER_NAME = "reddit-actions"
 TOOL_SPECS: tuple[dict[str, str], ...] = (
     {
         "name": "reddit_search",
-        "description": "Search public Reddit posts (no paid API).",
+        "description": "Search public Reddit posts, subject to Reddit access availability.",
     },
     {
         "name": "reddit_comments",
@@ -220,7 +220,7 @@ def create_server():
     server = MCPServer(
         SERVER_NAME,
         instructions=(
-            "Free Reddit intelligence toolkit (public JSON). "
+            "Read-only Reddit toolkit (public JSON; access subject to Reddit approval and limits). "
             "Read-only: search posts, comments, threads, subreddit listings."
         ),
     )

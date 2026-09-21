@@ -24,14 +24,11 @@ def test_readme_exists_and_english_public_surface():
     assert "analyze_thread" in readme
     assert "reddit-actions" in readme
     assert "MIT" in readme
-    # Free toolkit messaging — paid API is context, not a requirement
+    # Distinguish the software license from Reddit access eligibility.
     lower = readme.lower()
-    assert (
-        "paid api" in lower
-        or "paid reddit api" in lower
-        or "without a paid" in lower
-        or "no paid" in lower
-    )
+    assert "free and open source" in lower
+    assert "approval" in lower
+    assert "not guaranteed" in lower
     assert "REDDIT_USER_AGENT" in readme
     assert "Rate limit" in readme or "rate limit" in readme.lower()
 

@@ -1,4 +1,4 @@
-"""reddit_actions — Free Reddit intelligence toolkit (posts, comments, CLI, MCP)."""
+"""reddit_actions — Read-only Reddit toolkit (posts, comments, CLI, MCP)."""
 
 from importlib.metadata import PackageNotFoundError, version
 

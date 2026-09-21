@@ -118,7 +118,7 @@ def _print_thread(analysis: ThreadAnalysis) -> None:
 @click.group()
 @click.version_option(__version__, prog_name="reddit-actions")
 def cli() -> None:
-    """Reddit Actions — free public Reddit intelligence toolkit."""
+    """Reddit Actions — read-only toolkit for public Reddit data."""
 
 
 @cli.command()
