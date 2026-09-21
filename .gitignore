@@ -1,0 +1,43 @@
+# Secrets — never upload
+.env
+*.env
+cookies.txt
+
+# Internal planning / agent notes — stay local, not on GitHub
+PROMPT_ARRANQUE.md
+IMPLEMENTATION_PLAN.md
+Implementation_Plan/
+docs/internal/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Generated data
+data/
+*.log
+
+# Keep intentional public fixtures/docs
+!docs/**/*.md
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

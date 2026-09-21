@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reddit-actions"
+version = "0.1.0"
+description = "Free Reddit intelligence toolkit: posts, comments, CLI and MCP — no paid API."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "click>=8.1",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+mcp = ["mcp[cli]>=1.0"]
+dev = [
+    "pytest>=8.0",
+    "respx>=0.22",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+reddit-actions = "reddit_actions.cli:cli"
+reddit-actions-mcp = "reddit_actions.mcp_server:run_server"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["reddit_actions*"]
+
+[tool.setuptools.package-data]
+"reddit_actions" = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["reddit_actions", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]
+ignore = ["E501"]
