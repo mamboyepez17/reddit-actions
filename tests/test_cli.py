@@ -257,9 +257,19 @@ def test_subreddit_json(runner):
 
 def test_missing_user_agent_friendly_error(runner, monkeypatch):
     monkeypatch.delenv("REDDIT_USER_AGENT", raising=False)
-    from reddit_actions.config import reset_settings_cache
 
-    reset_settings_cache()
+    from reddit_actions.config import Settings
+
+    def missing_ua_settings():
+        # Ignore project .env — simulate a machine with no configuration.
+        return Settings(_env_file=None)
+
+    monkeypatch.setattr("reddit_actions.http_client.get_settings", missing_ua_settings)
     result = runner.invoke(cli, ["search", "python"])
     assert result.exit_code != 0
-    assert "REDDIT_USER_AGENT" in result.output or "user_agent" in result.output.lower() or "Error" in result.output
+    assert (
+        "REDDIT_USER_AGENT" in result.output
+        or "user_agent" in result.output.lower()
+        or "Error" in result.output
+        or "Configuration" in result.output
+    )

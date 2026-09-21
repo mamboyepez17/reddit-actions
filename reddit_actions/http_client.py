@@ -60,12 +60,21 @@ class RedditHttpClient:
         self._sleep = sleep
         self._monotonic = monotonic
         self._last_request_at: float | None = None
+        headers = {
+            "User-Agent": self.settings.reddit_user_agent,
+            "Accept": "application/json",
+        }
+        cookie_header = self.settings.build_cookie_header()
+        if cookie_header:
+            headers["Cookie"] = cookie_header
+            # Never log cookie values.
+            logger.info(
+                "Using Reddit session cookies (%d chars) for requests.",
+                len(cookie_header),
+            )
         self._client = httpx.Client(
             base_url=self.settings.reddit_base_url,
-            headers={
-                "User-Agent": self.settings.reddit_user_agent,
-                "Accept": "application/json",
-            },
+            headers=headers,
             timeout=self.settings.reddit_timeout,
             follow_redirects=True,
             transport=transport,
