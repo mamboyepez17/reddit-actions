@@ -1,14 +1,15 @@
 # Reddit Actions
 
-### Read-only Reddit toolkit for Python, CLI and AI agents
+### Free Reddit toolkit for Python, CLI and AI agents
 
-Explore **public** Reddit posts and comments with a free, open-source toolkit that runs locally. Access depends on Reddit availability and terms.
+Search public posts, explore comments and analyze threads — **free and open source**, running on your own machine.
 
-The toolkit is free and open source. Reddit access depends on approval, authentication, applicable terms and rate limits; availability and zero-cost access are not guaranteed.
+The current access mode works without purchasing a paid API subscription. Bring your own local configuration and use the library, CLI or MCP integration.
 
 Library · CLI · Optional MCP server · Python 3.11+
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Free & Open Source](https://img.shields.io/badge/Toolkit-Free%20%26%20Open%20Source-ff4500?style=for-the-badge&logo=reddit&logoColor=white)](LICENSE)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-138%20passing-brightgreen?style=for-the-badge)](#development)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
@@ -35,16 +36,11 @@ Library · CLI · Optional MCP server · Python 3.11+
 
 ## Why this project?
 
-**Reddit Actions** provides a Python library, CLI and optional MCP server for reading public Reddit posts and comments.
+**Reddit Actions** brings public Reddit posts and comments into your Python scripts, terminal and AI tools through one read-only interface. The toolkit has no subscription fee and runs locally.
 
-Reddit offers free access for eligible applications as well as paid access. Its current documentation lists **100 queries per minute per OAuth client ID** for eligible free access, averaged over a 10-minute window. API access requires approval; this is not an entitlement provided by installing this toolkit.
+The current backend uses public JSON endpoints with a descriptive User-Agent and optional session cookies. OAuth is an optional future integration, not a requirement of the current implementation.
 
-- [Reddit Data API Wiki](https://support.reddithelp.com/hc/en-us/articles/16160319875092-Reddit-Data-API-Wiki)
-- [Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy)
-
-**Current implementation (experimental access):** public JSON endpoints with a descriptive User-Agent and optional session cookies. OAuth is an optional future integration and is **not implemented** in this release. The current implementation does not require OAuth credentials to run, but that does not remove Reddit’s access requirements. The OAuth quota above does not describe or guarantee the quota of the current cookie-based client. Cookies do not guarantee access or replace required approval.
-
-**Product promise:** a free local tool for exploring public Reddit posts and comments through a consistent, read-only interface. Access depends on Reddit availability and terms. No guarantee of unrestricted access, complete historical coverage, or zero Reddit fees for every use case.
+**Maintenance goal:** keep the toolkit compatible as Reddit evolves, with fixes and updates when feasible. Reddit changes can interrupt access; uninterrupted availability is not guaranteed. See [access conditions](#rate-limits--ethics) for details.
 
 **Not in v1:** posting, voting, spam bots, mass scraping, Reddit Enterprise.
 
@@ -356,6 +352,12 @@ post.full_permalink  # always absolute reddit.com URL
 ---
 
 ## Rate limits & ethics
+
+Reddit access remains subject to its terms, authentication requirements and applicable approval. Session cookies do not replace required approval. This is an independent toolkit, not an official Reddit API offering.
+
+Reddit documents 100 queries per minute per OAuth client ID for eligible free access, averaged over a 10-minute window. That quota does **not** describe the current cookie-based client. OAuth is not implemented in this release.
+
+References: [Reddit Data API Wiki](https://support.reddithelp.com/hc/en-us/articles/16160319875092-Reddit-Data-API-Wiki) and [Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy).
 
 | Setting | Default | Meaning |
 |---------|---------|---------|

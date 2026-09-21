@@ -220,7 +220,7 @@ def create_server():
     server = MCPServer(
         SERVER_NAME,
         instructions=(
-            "Read-only Reddit toolkit (public JSON; access subject to Reddit approval and limits). "
+            "Free, open-source Reddit toolkit (public JSON; access subject to Reddit terms). "
             "Read-only: search posts, comments, threads, subreddit listings."
         ),
     )
