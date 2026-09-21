@@ -8,7 +8,7 @@ Library · CLI · Optional MCP server · Python 3.11+
 
 [![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f?style=for-the-badge)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-129%20passing-brightgreen?style=for-the-badge)](#development)
+[![Tests](https://img.shields.io/badge/Tests-138%20passing-brightgreen?style=for-the-badge)](#development)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
 [![API cost](https://img.shields.io/badge/Reddit%20API-Free-ff4500?style=for-the-badge&logo=reddit&logoColor=white)](#why-this-project)
 
@@ -19,6 +19,8 @@ Library · CLI · Optional MCP server · Python 3.11+
 - [Why this project?](#why-this-project)
 - [What you get](#what-you-get)
 - [Quick start](#quick-start)
+- [Session cookies (when Reddit blocks anonymous access)](#session-cookies-when-reddit-blocks-anonymous-access)
+- [Verify your setup](#verify-your-setup)
 - [Library](#library)
 - [CLI](#cli)
 - [MCP server](#mcp-server)
@@ -38,7 +40,7 @@ Product-grade Reddit access usually means the **paid** official API.
 | | Paid Reddit API | Reddit Actions |
 |---|---|---|
 | Cost | $$$ | **Free** |
-| Auth | OAuth app required | **User-Agent only** (v1) |
+| Auth | OAuth / paid tiers | **User-Agent** + optional **session cookies** |
 | Scope | Full write/read surface | **Public read-only** |
 | Shape | Official SDK | **Python lib + CLI + MCP** |
 | Target users | Commercial integrations | Research, agents, tools like TrendScope |
@@ -62,13 +64,14 @@ Design principles:
 - **Type-hinted** public API
 - **Mocked tests** — no live Reddit required for CI
 - **Secrets stay local** — `.env` is gitignored
+- **Session-cookie fallback** — works on networks where anonymous JSON returns **HTTP 403**
 
 ---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/reddit-actions.git
+git clone https://github.com/mamboyepez17/reddit-actions.git
 cd reddit-actions
 python -m venv .venv
 ```
@@ -89,7 +92,7 @@ pip install -e ".[dev]"
 cp .env.example .env
 ```
 
-Set a descriptive User-Agent in `.env` (required):
+Minimum `.env` (always required):
 
 ```env
 REDDIT_USER_AGENT=reddit-actions/0.1 (by u/yourname; research)
@@ -104,6 +107,101 @@ Optional MCP extras:
 ```bash
 pip install -e ".[mcp,dev]"
 ```
+
+---
+
+## Session cookies (when Reddit blocks anonymous access)
+
+Some networks (datacenter IPs, aggressive bot detection) get **HTTP 403** on Reddit’s public JSON even with a valid User-Agent. That is platform protection, not a bug in this library.
+
+**Workaround:** copy your browser session cookies into a **local** `.env` file.  
+`.env` is gitignored — never commit cookies, never paste them in issues/chats.
+
+### Step 1 — Log in
+
+Open [reddit.com](https://www.reddit.com) in your browser and **sign in**.
+
+### Step 2 — Open DevTools cookies
+
+1. Press `F12` → **Application** tab  
+2. Left sidebar: **Storage → Cookies → `https://www.reddit.com`**  
+3. Select that origin so it is highlighted  
+
+If the table on the right shows `google.com` / `accounts.google.com` domains, you are looking at the wrong cookie store. Re-click `https://www.reddit.com`.
+
+### Step 3 — Filter and copy the session cookies
+
+1. In the **Filter** box type: `session`  
+2. You should see rows like:
+
+| Name | Domain | Needed? |
+|------|--------|---------|
+| `reddit_session` | `.reddit.com` | **Yes (required)** — long JWT, often starts with `eyJ...` |
+| `session_tracker` | `.reddit.com` | Recommended |
+| `token_v2` | `.reddit.com` | Optional, if present |
+
+3. Click the **`reddit_session`** row  
+4. In the preview panel below, copy the **full Value** (the table column is truncated)
+
+### Step 4 — Paste into `.env`
+
+```env
+REDDIT_USER_AGENT=reddit-actions/0.1 (by u/yourname; research)
+REDDIT_SESSION_COOKIE=paste_full_reddit_session_value_here
+REDDIT_SESSION_TRACKER=paste_session_tracker_value_here
+```
+
+You may paste either:
+
+- raw values only (`eyJhbGciOi...`), or  
+- full `name=value` strings (`reddit_session=eyJ...`) — prefixes are stripped automatically
+
+**Alternative (often easier):** `F12` → **Network** → reload Reddit → click any `www.reddit.com` request → **Headers → Request Headers → Cookie** → copy the entire `Cookie:` string:
+
+```env
+REDDIT_COOKIE_HEADER=reddit_session=...; session_tracker=...; other=...
+```
+
+`REDDIT_COOKIE_HEADER` overrides the individual cookie variables.
+
+### Step 5 — Cookie expired or blocked again?
+
+Session cookies expire. If requests return **403** again:
+
+1. Log out/in on Reddit (or use another account)  
+2. Copy the new `reddit_session` value  
+3. Update `.env`  
+4. Re-run your command  
+
+No code changes needed.
+
+### Security checklist
+
+- [ ] `.env` stays on your machine only  
+- [ ] `.env` is listed in `.gitignore` (default in this repo)  
+- [ ] Do not paste cookies into GitHub issues, README, or chats  
+- [ ] Use a throwaway Reddit account if you prefer not to use your main one  
+
+---
+
+## Verify your setup
+
+```powershell
+# from project root, with .venv activated
+.venv\Scripts\python.exe -c "from reddit_actions import search_posts; posts=search_posts('python', limit=5); print(f'{len(posts)} posts'); [print(p.score, p.title[:60]) for p in posts]"
+```
+
+Expected: a list of real post titles from Reddit.
+
+CLI smoke test:
+
+```powershell
+reddit-actions search "python" --limit 5
+reddit-actions subreddit --subreddit python --sort hot --limit 5
+reddit-actions comments <post_id> --limit 10
+```
+
+If you see `Error: Blocked or unauthorized (403)`, refresh the session cookies (section above).
 
 ---
 
@@ -216,7 +314,7 @@ On failure tools return structured errors (never crash the server):
 }
 ```
 
-Example MCP config (stdio):
+Example MCP config (stdio) — copy the **absolute path** of your venv scripts:
 
 ```json
 {
@@ -224,12 +322,15 @@ Example MCP config (stdio):
     "reddit-actions": {
       "command": "C:/path/to/reddit-actions/.venv/Scripts/reddit-actions-mcp.exe",
       "env": {
-        "REDDIT_USER_AGENT": "reddit-actions/0.1 (by u/yourname; research)"
+        "REDDIT_USER_AGENT": "reddit-actions/0.1 (by u/yourname; research)",
+        "REDDIT_SESSION_COOKIE": "paste_your_session_cookie_here"
       }
     }
   }
 }
 ```
+
+Prefer putting secrets in the process environment or a local env file — not in committed JSON.
 
 ---
 
@@ -242,7 +343,7 @@ Example MCP config (stdio):
 **`ThreadAnalysis`** — post, comments + helpers: `comment_count`, `total_comment_score`, `comments_by_depth`, `top_comments(n)`, `controversial_count`
 
 ```python
-analysis.full_permalink  # via Post/Comment: always absolute reddit.com URL
+post.full_permalink  # always absolute reddit.com URL
 ```
 
 ---
@@ -260,8 +361,7 @@ analysis.full_permalink  # via Post/Comment: always absolute reddit.com URL
 - Intended use: **research, personal agents, product read-only integrations**
 - Do **not** mass-rehost content or hammer endpoints
 - Always identify your app in the User-Agent
-
-> **Access note:** some networks (especially datacenter IPs) receive HTTP 403 from Reddit on public JSON even with a valid User-Agent. That is platform bot protection, not a parser bug. OAuth / cookie fallback is on the roadmap when anonymous access is blocked.
+- Session cookies are a **personal fallback**, not a license for abuse
 
 ---
 
@@ -270,8 +370,8 @@ analysis.full_permalink  # via Post/Comment: always absolute reddit.com URL
 ```
 reddit-actions/
 ├── reddit_actions/
-│   ├── config.py           # pydantic-settings + .env
-│   ├── http_client.py      # UA, delay, retries, typed errors
+│   ├── config.py           # pydantic-settings + .env + session cookies
+│   ├── http_client.py      # UA, delay, retries, typed errors, Cookie header
 │   ├── models.py           # Post, Comment, ThreadAnalysis
 │   ├── auth/anonymous.py   # public JSON path builders
 │   ├── scrapers/           # search · comments · subreddit
@@ -281,7 +381,7 @@ reddit-actions/
 │   └── mcp_server.py       # optional MCP tools
 ├── tests/                  # pytest + respx (mocked HTTP)
 ├── .github/workflows/ci.yml
-├── .env.example
+├── .env.example            # template — copy to .env
 ├── LICENSE
 └── README.md
 ```
